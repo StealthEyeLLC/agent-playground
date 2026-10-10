@@ -1,0 +1,31 @@
+name: LEGION temporary Gemma 270M transport
+on:
+  push:
+    branches:
+      - legion-gemma270m-transport-20261010-a
+    paths:
+      - .github/workflows/legion-gemma270m-20261010.yml
+permissions:
+  contents: read
+jobs:
+  stage-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Download official public GGUF and check source SHA256
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 4 --retry-delay 3 --connect-timeout 20 --max-time 600 \
+            --output gemma-3-270m-it-qat-Q4_0.gguf \
+            'https://huggingface.co/lmstudio-community/gemma-3-270m-it-qat-GGUF/resolve/main/gemma-3-270m-it-qat-Q4_0.gguf?download=true'
+          printf '%s  %s\n' '5f4b2e17722e510122c464573b880587f4983347a40e5472b858d5a3c1ab8095' 'gemma-3-270m-it-qat-Q4_0.gguf' | sha256sum --check
+          test "$(stat -c %s gemma-3-270m-it-qat-Q4_0.gguf)" -gt 200000000
+      - name: Publish short-lived verified artifact for existing connector
+        uses: actions/upload-artifact@v4
+        with:
+          name: legion-gemma-270m-q4-20261010
+          path: gemma-3-270m-it-qat-Q4_0.gguf
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
